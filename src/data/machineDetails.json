@@ -1,0 +1,129 @@
+{
+  "factories": [
+    {
+      "id": "F1",
+      "name": "Factory Alpha",
+      "plants": [
+        {
+          "id": "P1",
+          "name": "Plant 1",
+          "departments": [
+            {
+              "id": "D1",
+              "name": "Assembly",
+              "zones": [
+                {
+                  "id": "Z1",
+                  "name": "Zone 1",
+                  "machines": ["M1", "M2", "M3", "M4", "M5"]
+                },
+                {
+                  "id": "Z2",
+                  "name": "Zone 2",
+                  "machines": ["M6", "M7", "M8", "M9", "M10"]
+                }
+              ]
+            },
+            {
+              "id": "D2",
+              "name": "Welding",
+              "zones": [
+                {
+                  "id": "Z3",
+                  "name": "Weld Line 1",
+                  "machines": ["M11", "M12", "M13", "M14", "M15"]
+                },
+                {
+                  "id": "Z4",
+                  "name": "Weld Line 2",
+                  "machines": ["M16", "M17", "M18", "M19", "M20"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "P2",
+          "name": "Plant 2",
+          "departments": [
+            {
+              "id": "D3",
+              "name": "Machining",
+              "zones": [
+                {
+                  "id": "Z5",
+                  "name": "CNC Zone",
+                  "machines": ["M21", "M22", "M23", "M24", "M25"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "F2",
+      "name": "Factory Beta",
+      "plants": [
+        {
+          "id": "P3",
+          "name": "Plant A",
+          "departments": [
+            {
+              "id": "D4",
+              "name": "Painting",
+              "zones": [
+                {
+                  "id": "Z6",
+                  "name": "Paint Booth 1",
+                  "machines": ["M26", "M27", "M28", "M29", "M30"]
+                }
+              ]
+            },
+            {
+              "id": "D5",
+              "name": "Packaging",
+              "zones": [
+                {
+                  "id": "Z7",
+                  "name": "Pack Line 1",
+                  "machines": ["M31", "M32", "M33", "M34", "M35"]
+                },
+                {
+                  "id": "Z8",
+                  "name": "Pack Line 2",
+                  "machines": ["M36", "M37", "M38", "M39", "M40"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "F3",
+      "name": "Factory Gamma",
+      "plants": [
+        {
+          "id": "P4",
+          "name": "Plant X",
+          "departments": [
+            {
+              "id": "D6",
+              "name": "Quality",
+              "zones": [
+                {
+                  "id": "Z9",
+                  "name": "Inspection Zone",
+                  "machines": ["M41", "M42", "M43", "M44", "M45"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

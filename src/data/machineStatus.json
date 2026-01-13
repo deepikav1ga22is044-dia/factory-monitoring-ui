@@ -1,0 +1,55 @@
+{
+  "M1": "running",
+  "M2": "idle",
+  "M3": "running",
+  "M4": "off",
+  "M5": "running",
+
+  "M6": "idle",
+  "M7": "running",
+  "M8": "fault",
+  "M9": "running",
+  "M10": "off",
+
+  "M11": "running",
+  "M12": "idle",
+  "M13": "running",
+  "M14": "fault",
+  "M15": "running",
+
+  "M16": "off",
+  "M17": "running",
+  "M18": "idle",
+  "M19": "running",
+  "M20": "fault",
+
+  "M21": "running",
+  "M22": "idle",
+  "M23": "running",
+  "M24": "off",
+  "M25": "running",
+
+  "M26": "idle",
+  "M27": "running",
+  "M28": "fault",
+  "M29": "running",
+  "M30": "off",
+
+  "M31": "running",
+  "M32": "idle",
+  "M33": "running",
+  "M34": "off",
+  "M35": "fault",
+
+  "M36": "running",
+  "M37": "idle",
+  "M38": "running",
+  "M39": "fault",
+  "M40": "off",
+
+  "M41": "running",
+  "M42": "idle",
+  "M43": "fault",
+  "M44": "running",
+  "M45": "off"
+}

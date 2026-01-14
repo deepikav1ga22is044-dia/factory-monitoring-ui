@@ -7,36 +7,58 @@ import ZoneView from "./components/ZoneView";
 import MachineModal from "./components/MachineModal";
 
 function App() {
+  /* -------- Dropdown selections -------- */
   const [selectedFactory, setSelectedFactory] = useState("");
   const [selectedPlant, setSelectedPlant] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
 
+  /* -------- Layout & machine state -------- */
   const [zones, setZones] = useState([]);
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [editMode, setEditMode] = useState(false);
 
-  /* Resolve hierarchy */
+  /* ======== ✅ ADD 1: DEFAULT FACTORY & PLANT ON LOAD ======== */
+  useEffect(() => {
+    if (!machineData.factories?.length) return;
+
+    const firstFactory = machineData.factories[0];
+    const firstPlant = firstFactory.plants?.[0];
+
+    setSelectedFactory(firstFactory.id);
+    setSelectedPlant(firstPlant?.id || "");
+  }, []);
+
+  /* -------- Resolve hierarchy -------- */
   const factory = machineData.factories.find(
-    (f) => f.id === selectedFactory || f.name === selectedFactory
+    (f) => f.id === selectedFactory
   );
 
   const plant = factory?.plants.find(
-    (p) => p.id === selectedPlant || p.name === selectedPlant
+    (p) => p.id === selectedPlant
   );
 
-  const department = plant
-    ? plant.departments.find(
-        (d) => d.id === selectedDept || d.name === selectedDept
-      )
-    : null;
+  /* ======== ✅ ADD 2: AUTO-SELECT FIRST DEPT ======== */
+  useEffect(() => {
+    if (!plant) return;
 
-  /* Unique key per Factory + Plant + Dept */
-  const layoutKey =
-    factory && plant && department
-      ? `layout-${factory.id}-${plant.id}-${department.id}`
+    const firstDept = plant.departments?.[0];
+    if (firstDept) {
+      setSelectedDept(firstDept.id);
+    }
+  }, [plant]);
+
+  const department =
+    plant && selectedDept
+      ? plant.departments.find((d) => d.id === selectedDept)
       : null;
 
-  /* Load layout */
+  /* -------- Unique key for saving layout -------- */
+  const layoutKey =
+    selectedFactory && selectedPlant && selectedDept
+      ? `layout-${selectedFactory}-${selectedPlant}-${selectedDept}`
+      : null;
+
+  /* -------- Load zones when department changes -------- */
   useEffect(() => {
     if (!department) {
       setZones([]);
@@ -54,14 +76,14 @@ function App() {
     setZones([...department.zones]);
   }, [department, layoutKey]);
 
-  /* Save layout (only in edit mode) */
+  /* -------- Save layout in edit mode -------- */
   useEffect(() => {
     if (layoutKey && editMode) {
       localStorage.setItem(layoutKey, JSON.stringify(zones));
     }
   }, [zones, editMode, layoutKey]);
 
-  /* Reset layout */
+  /* -------- Reset layout -------- */
   const resetLayout = () => {
     if (!department) return;
 
@@ -82,7 +104,7 @@ function App() {
 
       {/* ---------- NAV BAR ---------- */}
       <div className="nav-bar">
-        {/* LEFT: Factory / Plant / Dept */}
+        {/* LEFT: Dropdowns */}
         <ControlPanel
           factories={machineData.factories}
           selectedFactory={selectedFactory}
@@ -93,28 +115,37 @@ function App() {
           setSelectedDept={setSelectedDept}
         />
 
-        {/* RIGHT: Edit / Reset */}
+        {/* RIGHT: Status Legend + Edit / Reset */}
         {department && (
-          <div className="nav-actions">
-            <button
-              onClick={() => setEditMode(!editMode)}
-              className={`nav-btn ${editMode ? "danger" : ""}`}
-            >
-              {editMode ? "Exit Edit" : "Edit Layout"}
-            </button>
+          <div className="nav-right">
+            <div className="status-legend">
+              <div><span className="legend-dot running"></span> Running</div>
+              <div><span className="legend-dot idle"></span> Idle</div>
+              <div><span className="legend-dot off"></span> Off</div>
+              <div><span className="legend-dot fault"></span> Fault</div>
+            </div>
 
-            <button
-              onClick={resetLayout}
-              className="nav-btn secondary"
-            >
-              Reset Layout
-            </button>
+            <div className="nav-actions">
+              <button
+                onClick={() => setEditMode(!editMode)}
+                className={`nav-btn ${editMode ? "danger" : ""}`}
+              >
+                {editMode ? "Exit Edit" : "Edit Layout"}
+              </button>
+
+              <button
+                onClick={resetLayout}
+                className="nav-btn secondary"
+              >
+                Reset Layout
+              </button>
+            </div>
           </div>
         )}
       </div>
 
       {/* ---------- ZONES & MACHINES ---------- */}
-      {department && (
+      {department && zones.length > 0 && (
         <ZoneView
           zones={zones}
           setZones={setZones}
@@ -123,7 +154,7 @@ function App() {
         />
       )}
 
-      {/* ---------- MACHINE MODAL ---------- */}
+      {/* ---------- MACHINE DETAILS MODAL ---------- */}
       <MachineModal
         machine={selectedMachine}
         onClose={() => setSelectedMachine(null)}

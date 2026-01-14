@@ -1,10 +1,11 @@
 /* ---------------- CONTROL PANEL ---------------- */
 .control-panel {
   display: flex;
-  gap: 20px;
-  padding: 20px;
-  background: #1a1a1a;
+  gap: 12px;
+  padding: 0;          /* 🔑 remove padding */
+  background: none;    /* 🔑 remove background */
 }
+
 
 .control-panel select {
   background: #2a2a2a;
@@ -20,6 +21,12 @@
   gap: 24px;
   padding: 24px;
 }
+.zone-header {
+  display: flex;
+  flex-direction: column; /* stack name + APQO */
+  gap: 8px;               /* space between name and APQO */
+  margin-bottom: 14px;    /* space before machines */
+}
 
 /* ---------------- ZONE CARD ---------------- */
 .zone-box {
@@ -34,12 +41,30 @@
   margin-bottom: 12px;
   color: #00c8ff;
 }
+/* -------- ZONE APQO (NEUTRAL) -------- */
+.zone-apqo {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #cfcfcf;
+
+}
+
+.zone-apqo .apqo {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #1f1f1f;
+  font-weight: 500;
+}
+
 
 /* ---------------- MACHINES LAYOUT ---------------- */
 .machines {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  margin-top: 8px;
 }
 
 /* ---------------- MACHINE (3D FANUC STYLE) ---------------- */
@@ -192,6 +217,7 @@
   color: #00c8ff;
   font-size: 14px;
   font-weight: 600;
+  margin-bottom: 2px;
 }
 /* NAV BAR FIX */
 .nav-bar {
@@ -213,4 +239,76 @@
   display: flex;
   gap: 10px;
   white-space: nowrap; /* 🔑 VERY IMPORTANT */
+}
+/* -------- NAV BAR -------- */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: #1a1a1a;
+  flex-wrap: nowrap;   /* 🔑 VERY IMPORTANT */
+}
+
+
+/* RIGHT SIDE GROUP */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;  /* 🔑 keeps legend + buttons in one line */
+}
+
+
+/* -------- STATUS LEGEND -------- */
+.status-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: #ddd;
+}
+
+.status-legend div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* Legend dots */
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot.running {
+  background: #2ecc71;
+}
+
+.legend-dot.idle {
+  background: #f1c40f;
+}
+
+.legend-dot.off {
+  background: #555;
+}
+
+.legend-dot.fault {
+  background: #e74c3c;
+}
+.title-bar {
+  display: flex;
+  justify-content: center;   /* horizontal center */
+  align-items: center;       /* vertical center */
+  padding: 16px 0;
+  background: linear-gradient(180deg, #1b1b1b, #111);
+}
+
+.title-bar h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
 }

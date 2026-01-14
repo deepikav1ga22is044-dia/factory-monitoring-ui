@@ -15,11 +15,19 @@
                 {
                   "id": "Z1",
                   "name": "Zone 1",
+                  "availability": 100,
+                  "performance": 0,
+                  "quality": 100,
+                  "oEE": 0,
                   "machines": ["M1", "M2", "M3", "M4", "M5"]
                 },
                 {
                   "id": "Z2",
                   "name": "Zone 2",
+                  "availability": 85,
+                  "performance": 60,
+                  "quality": 95,
+                  "oEE": 48,
                   "machines": ["M6", "M7", "M8", "M9", "M10"]
                 }
               ]
@@ -31,11 +39,19 @@
                 {
                   "id": "Z3",
                   "name": "Weld Line 1",
+                  "availability": 90,
+                  "performance": 70,
+                  "quality": 92,
+                  "oEE": 58,
                   "machines": ["M11", "M12", "M13", "M14", "M15"]
                 },
                 {
                   "id": "Z4",
                   "name": "Weld Line 2",
+                  "availability": 75,
+                  "performance": 65,
+                  "quality": 88,
+                  "oEE": 43,
                   "machines": ["M16", "M17", "M18", "M19", "M20"]
                 }
               ]
@@ -53,6 +69,10 @@
                 {
                   "id": "Z5",
                   "name": "CNC Zone",
+                  "availability": 95,
+                  "performance": 80,
+                  "quality": 97,
+                  "oEE": 74,
                   "machines": ["M21", "M22", "M23", "M24", "M25"]
                 }
               ]
@@ -61,7 +81,6 @@
         }
       ]
     },
-
     {
       "id": "F2",
       "name": "Factory Beta",
@@ -77,6 +96,10 @@
                 {
                   "id": "Z6",
                   "name": "Paint Booth 1",
+                  "availability": 88,
+                  "performance": 72,
+                  "quality": 90,
+                  "oEE": 57,
                   "machines": ["M26", "M27", "M28", "M29", "M30"]
                 }
               ]
@@ -88,11 +111,19 @@
                 {
                   "id": "Z7",
                   "name": "Pack Line 1",
+                  "availability": 92,
+                  "performance": 85,
+                  "quality": 96,
+                  "oEE": 75,
                   "machines": ["M31", "M32", "M33", "M34", "M35"]
                 },
                 {
                   "id": "Z8",
                   "name": "Pack Line 2",
+                  "availability": 78,
+                  "performance": 60,
+                  "quality": 89,
+                  "oEE": 42,
                   "machines": ["M36", "M37", "M38", "M39", "M40"]
                 }
               ]
@@ -101,7 +132,6 @@
         }
       ]
     },
-
     {
       "id": "F3",
       "name": "Factory Gamma",
@@ -117,6 +147,10 @@
                 {
                   "id": "Z9",
                   "name": "Inspection Zone",
+                  "availability": 98,
+                  "performance": 90,
+                  "quality": 99,
+                  "oEE": 87,
                   "machines": ["M41", "M42", "M43", "M44", "M45"]
                 }
               ]

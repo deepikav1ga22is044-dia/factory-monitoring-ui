@@ -53,15 +53,29 @@ function ZoneCard({ zone, editMode, onMachineClick, updateZoneMachines }) {
     const oldIndex = zone.machines.indexOf(active.id);
     const newIndex = zone.machines.indexOf(over.id);
 
-    updateZoneMachines(zone.id, arrayMove(zone.machines, oldIndex, newIndex));
+    updateZoneMachines(
+      zone.id,
+      arrayMove(zone.machines, oldIndex, newIndex)
+    );
   };
 
   return (
     <div className="zone-box">
+      {/* -------- ZONE HEADER -------- */}
       <div className="zone-header">
         <span className="zone-name">{zone.name}</span>
+
+        {/* -------- APQO (ZONE LEVEL) -------- */}
+        <div className="zone-apqo">
+          <span className="apqo">A: {zone.availability ?? 0}%</span>
+          <span className="apqo">P: {zone.performance ?? 0}%</span>
+          <span className="apqo">Q: {zone.quality ?? 0}%</span>
+          <span className="apqo">OEE: {zone.oEE ?? 0}%</span>
+
+        </div>
       </div>
 
+      {/* -------- MACHINES -------- */}
       <DndContext
         collisionDetection={closestCenter}
         onDragEnd={handleMachineDragEnd}

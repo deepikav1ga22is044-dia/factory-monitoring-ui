@@ -39,7 +39,8 @@
 
 .zone-box h3 {
   margin-bottom: 12px;
-  color: #00c8ff;
+  color: #190a89;
+
 }
 /* -------- ZONE APQO (NEUTRAL) -------- */
 .zone-apqo {
@@ -150,6 +151,7 @@
   border-radius: 10px;
   border: 1px solid #333;
   width: 300px;
+
 }
 
 .modal-card h2 {
@@ -277,8 +279,8 @@
 
 /* Legend dots */
 .legend-dot {
-  width: 10px;
-  height: 10px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
 }
 
@@ -311,4 +313,147 @@
   font-weight: 600;
   color: #ffffff;
   text-align: center;
+}
+/* -------- Active Zone Highlight -------- */
+.zone-active {
+  border: 2px solid #00c8ff;
+  box-shadow: 0 0 12px rgba(0, 200, 255, 0.6);
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+/* Zone header spacing */
+.zone-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* APQO row spacing */
+.zone-apqo {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+/* Highlight active zone */
+.zone-active {
+  border: 2px solid #00c8ff;
+  box-shadow: 0 0 14px rgba(0, 200, 255, 0.5);
+}
+.machine-panel {
+  width: 320px;
+  background: #121212;
+  border-left: 1px solid #333;
+  padding: 16px;
+  color: #ddd;
+}
+
+.machine-panel h2 {
+  margin-bottom: 16px;
+  color: #00c8ff;
+}
+
+.machine-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.machine-row label {
+  color: #999;
+}
+
+.machine-panel.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+/* -------- MAIN CONTENT LAYOUT (FIXED) -------- */
+.content-layout {
+  display: flex;
+  flex-direction: row;        /* 🔑 FORCE side-by-side layout */
+  height: calc(100vh - 140px);
+  overflow: hidden;           /* 🔑 prevents panel dropping down */
+}
+
+/* -------- ZONES AREA ONLY -------- */
+.zones-grid {
+  flex: 1;                    /* takes remaining width */
+  overflow-y: auto;           /* scroll zones if many */
+}
+
+
+/* -------- MACHINE DETAIL PANEL -------- */
+.machine-panel {
+  width: 320px;
+  background: linear-gradient(180deg, #1b1b1b, #121212);
+  border-left: 1px solid #2a2a2a;
+  padding: 18px;
+  box-shadow: inset 6px 0 12px rgba(0,0,0,0.6);
+}
+
+
+.machine-panel h2 {
+  margin-bottom: 16px;
+  color: #00c8ff;
+  font-size: 16px;
+}
+
+/* Info rows */
+.machine-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.machine-row label {
+  color: #999;
+}
+
+/* Empty state */
+.machine-panel-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 13px;
+}
+/* -------- MACHINE PILL (LONG ID SAFE) -------- */
+.machine-pill {
+  padding: 6px 12px;
+  min-height: 32px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    inset -3px -3px 5px rgba(0,0,0,0.5),
+    inset 3px 3px 5px rgba(255,255,255,0.15),
+    0 4px 8px rgba(0,0,0,0.6);
+}
+
+/* STATUS COLORS */
+.machine-pill.running {
+  background: linear-gradient(145deg, #5aff5a, #0f8f0f);
+}
+
+.machine-pill.idle {
+  background: linear-gradient(145deg, #fff1a8, #b59b00);
+}
+
+.machine-pill.off {
+  background: linear-gradient(145deg, #777, #000);
+}
+
+.machine-pill.fault {
+  background: linear-gradient(145deg, #ff7b7b, #8f0000);
 }

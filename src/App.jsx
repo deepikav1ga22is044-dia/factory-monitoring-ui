@@ -2,109 +2,173 @@ import { useState, useEffect } from "react";
 import "./App.css";
 
 import machineData from "./data/machineDetails.json";
+import machineStatus from "./data/machineStatus.json";
 import ControlPanel from "./components/ControlPanel";
 import ZoneView from "./components/ZoneView";
-import MachineModal from "./components/MachineModal";
+import MachinePanel from "./components/MachinePanel";
+
+/* =========================================================
+   Generate consistent 15+ char Industrial Machine ID
+   ========================================================= */
+const getDisplayMachineId = (machineId, zoneName) => {
+  const num = machineId.replace(/\D/g, "").padStart(4, "0");
+  const zone = zoneName.replace(/\s+/g, "").toUpperCase().slice(0, 4);
+  return `PLT1-${zone}-MCH-${num}`;
+};
 
 function App() {
-  /* -------- Dropdown selections -------- */
+  /* -------- Selection -------- */
   const [selectedFactory, setSelectedFactory] = useState("");
   const [selectedPlant, setSelectedPlant] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
 
-  /* -------- Layout & machine state -------- */
+  /* -------- Layout & rotation -------- */
   const [zones, setZones] = useState([]);
+  const [activeZoneIndex, setActiveZoneIndex] = useState(0);
+  const [activeMachineIndex, setActiveMachineIndex] = useState(0);
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [editMode, setEditMode] = useState(false);
 
-  /* ======== ✅ ADD 1: DEFAULT FACTORY & PLANT ON LOAD ======== */
-  useEffect(() => {
-    if (!machineData.factories?.length) return;
-
-    const firstFactory = machineData.factories[0];
-    const firstPlant = firstFactory.plants?.[0];
-
-    setSelectedFactory(firstFactory.id);
-    setSelectedPlant(firstPlant?.id || "");
-  }, []);
-
   /* -------- Resolve hierarchy -------- */
-  const factory = machineData.factories.find(
-    (f) => f.id === selectedFactory
-  );
-
-  const plant = factory?.plants.find(
-    (p) => p.id === selectedPlant
-  );
-
-  /* ======== ✅ ADD 2: AUTO-SELECT FIRST DEPT ======== */
-  useEffect(() => {
-    if (!plant) return;
-
-    const firstDept = plant.departments?.[0];
-    if (firstDept) {
-      setSelectedDept(firstDept.id);
-    }
-  }, [plant]);
-
+  const factory = machineData.factories.find(f => f.id === selectedFactory);
+  const plant = factory?.plants.find(p => p.id === selectedPlant);
   const department =
     plant && selectedDept
-      ? plant.departments.find((d) => d.id === selectedDept)
+      ? plant.departments.find(d => d.id === selectedDept)
       : null;
 
-  /* -------- Unique key for saving layout -------- */
+  /* =========================================================
+     DEFAULT LOAD
+     ========================================================= */
+  useEffect(() => {
+    const f = machineData.factories[0];
+    const p = f.plants[0];
+    const d = p.departments[0];
+
+    setSelectedFactory(f.id);
+    setSelectedPlant(p.id);
+    setSelectedDept(d.id);
+  }, []);
+
+  /* -------- Auto select -------- */
+  useEffect(() => {
+    if (!factory) return;
+    setSelectedPlant(factory.plants[0].id);
+    setSelectedDept(factory.plants[0].departments[0].id);
+  }, [selectedFactory]);
+
+  useEffect(() => {
+    if (!plant) return;
+    setSelectedDept(plant.departments[0].id);
+  }, [selectedPlant]);
+
+  /* -------- Layout key -------- */
   const layoutKey =
     selectedFactory && selectedPlant && selectedDept
       ? `layout-${selectedFactory}-${selectedPlant}-${selectedDept}`
       : null;
 
-  /* -------- Load zones when department changes -------- */
+  /* =========================================================
+     LOAD ZONES
+     ========================================================= */
   useEffect(() => {
-    if (!department) {
-      setZones([]);
-      return;
-    }
+    if (!department) return;
 
-    if (layoutKey) {
-      const savedLayout = localStorage.getItem(layoutKey);
-      if (savedLayout) {
-        setZones(JSON.parse(savedLayout));
-        return;
-      }
-    }
+    const saved = layoutKey && localStorage.getItem(layoutKey);
+    const loadedZones = saved
+      ? JSON.parse(saved)
+      : [...department.zones];
 
-    setZones([...department.zones]);
+    setZones(loadedZones);
+    setActiveZoneIndex(0);
+    setActiveMachineIndex(0);
+
+    const firstZone = loadedZones[0];
+    if (firstZone?.machines.length) {
+      const m = firstZone.machines[0];
+      setSelectedMachine({
+        id: getDisplayMachineId(m, firstZone.name),
+        rawId: m,
+        status: machineStatus[m],
+        zone: firstZone.name
+      });
+    }
   }, [department, layoutKey]);
 
-  /* -------- Save layout in edit mode -------- */
+  /* =========================================================
+     ZONE CHANGE → RESET MACHINE
+     ========================================================= */
+  useEffect(() => {
+    if (!zones.length) return;
+
+    const zone = zones[activeZoneIndex];
+    if (!zone) return;
+
+    setActiveMachineIndex(0);
+
+    const m = zone.machines[0];
+    setSelectedMachine({
+      id: getDisplayMachineId(m, zone.name),
+      rawId: m,
+      status: machineStatus[m],
+      zone: zone.name
+    });
+  }, [activeZoneIndex, zones]);
+
+  /* =========================================================
+     MACHINE AUTO SCROLL (ZONE SAFE)
+     ========================================================= */
+  useEffect(() => {
+    if (editMode) return;
+    if (!zones.length) return;
+
+    const zone = zones[activeZoneIndex];
+    if (!zone) return;
+
+    const count = zone.machines.length;
+    const timer = setTimeout(() => {
+      setActiveMachineIndex(prev => (prev + 1) % count);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [activeMachineIndex, activeZoneIndex, zones, editMode]);
+
+  /* =========================================================
+     UPDATE PANEL (SINGLE SOURCE OF TRUTH)
+     ========================================================= */
+  useEffect(() => {
+    if (!zones.length) return;
+
+    const zone = zones[activeZoneIndex];
+    if (!zone) return;
+
+    const m = zone.machines[activeMachineIndex];
+    if (!m) return;
+
+    setSelectedMachine({
+      id: getDisplayMachineId(m, zone.name),
+      rawId: m,
+      status: machineStatus[m],
+      zone: zone.name
+    });
+  }, [activeMachineIndex, activeZoneIndex, zones]);
+
+  /* =========================================================
+     SAVE LAYOUT
+     ========================================================= */
   useEffect(() => {
     if (layoutKey && editMode) {
       localStorage.setItem(layoutKey, JSON.stringify(zones));
     }
   }, [zones, editMode, layoutKey]);
 
-  /* -------- Reset layout -------- */
-  const resetLayout = () => {
-    if (!department) return;
-
-    if (layoutKey) {
-      localStorage.removeItem(layoutKey);
-    }
-
-    setZones([...department.zones]);
-    setEditMode(false);
-  };
-
   return (
     <div className="app">
-      {/* ---------- TITLE BAR ---------- */}
       <header className="title-bar">
         <h1>Factory Monitoring Dashboard</h1>
       </header>
 
-      {/* ---------- NAV BAR ---------- */}
       <div className="nav-bar">
-        {/* LEFT: Dropdowns */}
         <ControlPanel
           factories={machineData.factories}
           selectedFactory={selectedFactory}
@@ -114,51 +178,20 @@ function App() {
           selectedDept={selectedDept}
           setSelectedDept={setSelectedDept}
         />
-
-        {/* RIGHT: Status Legend + Edit / Reset */}
-        {department && (
-          <div className="nav-right">
-            <div className="status-legend">
-              <div><span className="legend-dot running"></span> Running</div>
-              <div><span className="legend-dot idle"></span> Idle</div>
-              <div><span className="legend-dot off"></span> Off</div>
-              <div><span className="legend-dot fault"></span> Fault</div>
-            </div>
-
-            <div className="nav-actions">
-              <button
-                onClick={() => setEditMode(!editMode)}
-                className={`nav-btn ${editMode ? "danger" : ""}`}
-              >
-                {editMode ? "Exit Edit" : "Edit Layout"}
-              </button>
-
-              <button
-                onClick={resetLayout}
-                className="nav-btn secondary"
-              >
-                Reset Layout
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* ---------- ZONES & MACHINES ---------- */}
       {department && zones.length > 0 && (
-        <ZoneView
-          zones={zones}
-          setZones={setZones}
-          editMode={editMode}
-          onMachineClick={setSelectedMachine}
-        />
-      )}
+        <div className="content-layout">
+          <ZoneView
+            zones={zones}
+            editMode={editMode}
+            activeZoneIndex={activeZoneIndex}
+            getDisplayMachineId={getDisplayMachineId} // 🔑 KEY FIX
+          />
 
-      {/* ---------- MACHINE DETAILS MODAL ---------- */}
-      <MachineModal
-        machine={selectedMachine}
-        onClose={() => setSelectedMachine(null)}
-      />
+          <MachinePanel machine={selectedMachine} />
+        </div>
+      )}
     </div>
   );
 }

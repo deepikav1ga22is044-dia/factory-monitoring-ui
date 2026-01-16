@@ -7,9 +7,10 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import machineStatus from "../data/machineStatus.json";
+import machineMap from "../data/machineMap";
 
 /* ---------------- SORTABLE MACHINE ---------------- */
-function SortableMachine({ id, status, editMode, onClick }) {
+function SortableMachine({ machineKey, status, editMode, onClick }) {
   const {
     attributes,
     listeners,
@@ -17,7 +18,7 @@ function SortableMachine({ id, status, editMode, onClick }) {
     transform,
     transition
   } = useSortable({
-    id,
+    id: machineKey,
     disabled: !editMode
   });
 
@@ -25,6 +26,8 @@ function SortableMachine({ id, status, editMode, onClick }) {
     transform: CSS.Transform.toString(transform),
     transition
   };
+
+  const displayId = machineMap[machineKey] || machineKey;
 
   return (
     <div
@@ -35,18 +38,26 @@ function SortableMachine({ id, status, editMode, onClick }) {
       onClick={() => {
         if (!editMode) onClick();
       }}
-      title={editMode ? "Drag to reposition" : "Click for details"}
     >
-      <div className={`machine ${status}`}>
-        <span className="machine-text">{id}</span>
+      {/* ✅ FULL MACHINE ID ALWAYS */}
+      <div className={`machine-pill ${status}`}>
+        <span className="machine-text">{displayId}</span>
       </div>
     </div>
   );
 }
 
 /* ---------------- ZONE CARD ---------------- */
-function ZoneCard({ zone, editMode, onMachineClick, updateZoneMachines }) {
+function ZoneCard({
+  zone,
+  editMode,
+  isActive,
+  onMachineClick,
+  updateZoneMachines
+}) {
   const handleMachineDragEnd = (event) => {
+    if (!editMode) return;
+
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -60,55 +71,72 @@ function ZoneCard({ zone, editMode, onMachineClick, updateZoneMachines }) {
   };
 
   return (
-    <div className="zone-box">
-      {/* -------- ZONE HEADER -------- */}
+    <div className={`zone-box ${isActive ? "zone-active" : ""}`}>
       <div className="zone-header">
         <span className="zone-name">{zone.name}</span>
 
-        {/* -------- APQO (ZONE LEVEL) -------- */}
         <div className="zone-apqo">
-          <span className="apqo">A: {zone.availability ?? 0}%</span>
-          <span className="apqo">P: {zone.performance ?? 0}%</span>
-          <span className="apqo">Q: {zone.quality ?? 0}%</span>
-          <span className="apqo">OEE: {zone.oEE ?? 0}%</span>
-
+          <span>A: {zone.availability ?? 0}%</span>
+          <span>P: {zone.performance ?? 0}%</span>
+          <span>Q: {zone.quality ?? 0}%</span>
+          <span>OEE: {zone.oEE ?? 0}%</span>
         </div>
       </div>
 
-      {/* -------- MACHINES -------- */}
-      <DndContext
-        collisionDetection={closestCenter}
-        onDragEnd={handleMachineDragEnd}
-      >
-        <SortableContext
-          items={zone.machines}
-          strategy={horizontalListSortingStrategy}
+      {editMode ? (
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleMachineDragEnd}
         >
-          <div className="machines">
-            {zone.machines.map((machineId) => (
-              <SortableMachine
-                key={machineId}
-                id={machineId}
-                status={machineStatus[machineId]}
-                editMode={editMode}
-                onClick={() =>
-                  onMachineClick({
-                    id: machineId,
-                    status: machineStatus[machineId],
-                    zone: zone.name
-                  })
-                }
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+          <SortableContext
+            items={zone.machines}
+            strategy={horizontalListSortingStrategy}
+          >
+            <div className="machines">
+              {zone.machines.map((machineKey) => (
+                <SortableMachine
+                  key={machineKey}
+                  machineKey={machineKey}
+                  status={machineStatus[machineKey]}
+                  editMode
+                  onClick={() => {}}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      ) : (
+        <div className="machines">
+          {zone.machines.map((machineKey) => (
+            <SortableMachine
+              key={machineKey}
+              machineKey={machineKey}
+              status={machineStatus[machineKey]}
+              editMode={false}
+              onClick={() =>
+                onMachineClick({
+                  key: machineKey,
+                  id: machineMap[machineKey],
+                  status: machineStatus[machineKey],
+                  zone: zone.name
+                })
+              }
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 /* ---------------- ZONE VIEW ---------------- */
-function ZoneView({ zones, setZones, editMode, onMachineClick }) {
+function ZoneView({
+  zones,
+  setZones,
+  editMode,
+  activeZoneIndex,
+  onMachineClick
+}) {
   const updateZoneMachines = (zoneId, machines) => {
     setZones((prev) =>
       prev.map((z) =>
@@ -119,11 +147,12 @@ function ZoneView({ zones, setZones, editMode, onMachineClick }) {
 
   return (
     <div className="zones-grid">
-      {zones.map((zone) => (
+      {zones.map((zone, index) => (
         <ZoneCard
           key={zone.id}
           zone={zone}
           editMode={editMode}
+          isActive={index === activeZoneIndex}
           onMachineClick={onMachineClick}
           updateZoneMachines={updateZoneMachines}
         />

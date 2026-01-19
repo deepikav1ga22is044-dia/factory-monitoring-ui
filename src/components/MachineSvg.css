@@ -1,0 +1,86 @@
+.machine-svg-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* STATUS TEXT */
+.machine-svg-status {
+  font-size: 11px;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+/* MACHINE ID */
+.machine-svg-id {
+  font-size: 9px;
+  color: #cccccc;
+  max-width: 140px;
+  text-align: center;
+  word-break: break-word;
+}
+
+/* SVG COMMON */
+.machine-svg {
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+}
+
+/* BASE */
+.base {
+  fill: #3a3a3a;
+}
+
+/* CONTROL PANEL */
+.panel {
+  fill: #1a1a1a;
+  stroke: #000;
+}
+
+/* ================= STATUS COLORS ================= */
+
+.machine-svg-wrapper.running .front {
+  fill: #2ecc71;
+}
+
+.machine-svg-wrapper.running .side {
+  fill: #27ae60;
+}
+
+.machine-svg-wrapper.idle .front {
+  fill: #f1c40f;
+}
+
+.machine-svg-wrapper.idle .side {
+  fill: #d4ac0d;
+}
+
+.machine-svg-wrapper.off .front {
+  fill: #7f8c8d;
+}
+
+.machine-svg-wrapper.off .side {
+  fill: #707b7c;
+}
+
+.machine-svg-wrapper.fault .front {
+  fill: #e74c3c;
+}
+
+.machine-svg-wrapper.fault .side {
+  fill: #c0392b;
+}
+
+/* ================= ALARM BLINK ================= */
+
+.machine-svg-wrapper.fault .machine-svg {
+  animation: alarmBlink 1s infinite;
+}
+
+@keyframes alarmBlink {
+  50% {
+    opacity: 0.4;
+  }
+}

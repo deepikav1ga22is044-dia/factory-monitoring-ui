@@ -20,7 +20,7 @@ function ControlPanel({
           setSelectedDept("");
         }}
       >
-        <option value="">Select Factory</option>
+     
         {factories.map(f => (
           <option key={f.id} value={f.id}>{f.name}</option>
         ))}
@@ -34,7 +34,7 @@ function ControlPanel({
           setSelectedDept("");
         }}
       >
-        <option value="">Select Plant</option>
+        
         {factory?.plants.map(p => (
           <option key={p.id} value={p.id}>{p.name}</option>
         ))}
@@ -45,7 +45,7 @@ function ControlPanel({
         disabled={!selectedPlant}
         onChange={(e) => setSelectedDept(e.target.value)}
       >
-        <option value="">Select Department</option>
+        
         {plant?.departments.map(d => (
           <option key={d.id} value={d.id}>{d.name}</option>
         ))}

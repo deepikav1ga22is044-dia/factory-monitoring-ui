@@ -1,0 +1,63 @@
+.cnc-machine {
+  width: 130px;
+  padding: 8px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.cnc-machine:hover {
+  transform: scale(1.05);
+}
+
+/* SVG COLORS */
+.cnc-machine svg rect {
+  fill: #2c2c2c;
+  stroke: #000;
+  stroke-width: 1;
+}
+
+/* STATUS COLORS */
+.cnc-machine.running svg rect {
+  fill: #28c76f;
+}
+
+.cnc-machine.idle svg rect {
+  fill: #f1c40f;
+}
+
+.cnc-machine.off svg rect {
+  fill: #7f8c8d;
+}
+
+.cnc-machine.fault svg rect {
+  fill: #e74c3c;
+}
+
+/* BLINKING FOR ALARM */
+.cnc-machine.fault {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* STATUS TEXT */
+.cnc-status-label {
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+/* MACHINE ID */
+.cnc-id {
+  font-size: 10px;
+  margin-top: 4px;
+  color: #ddd;
+  word-break: break-all;
+}

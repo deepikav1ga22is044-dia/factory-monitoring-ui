@@ -1,79 +1,58 @@
+import { useEffect, useRef } from "react";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
-  useSortable,
   arrayMove,
-  horizontalListSortingStrategy
+  horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+
 import machineStatus from "../data/machineStatus.json";
 import machineMap from "../data/machineMap";
 
-/* ---------------- SORTABLE MACHINE ---------------- */
-function SortableMachine({ machineKey, status, editMode, onClick }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition
-  } = useSortable({
-    id: machineKey,
-    disabled: !editMode
-  });
+import SortableMachine from "./SortableMachine"; // edit mode capsules
+import CncMachineSvg from "./machines/CncMachineSvg"; // normal mode SVG
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition
-  };
-
-  const displayId = machineMap[machineKey] || machineKey;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...(editMode ? listeners : {})}
-      onClick={() => {
-        if (!editMode) onClick();
-      }}
-    >
-      {/* ✅ FULL MACHINE ID ALWAYS */}
-      <div className={`machine-pill ${status}`}>
-        <span className="machine-text">{displayId}</span>
-      </div>
-    </div>
-  );
-}
-
-/* ---------------- ZONE CARD ---------------- */
+/* =========================================================
+   ZONE CARD
+   ========================================================= */
 function ZoneCard({
   zone,
+  index,
   editMode,
   isActive,
+  setZones,
   onMachineClick,
-  updateZoneMachines
+  activeZoneRef,
 }) {
-  const handleMachineDragEnd = (event) => {
+  const handleDragEnd = (event) => {
     if (!editMode) return;
 
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = zone.machines.indexOf(active.id);
-    const newIndex = zone.machines.indexOf(over.id);
+    setZones((prev) =>
+      prev.map((z, i) => {
+        if (i !== index) return z;
 
-    updateZoneMachines(
-      zone.id,
-      arrayMove(zone.machines, oldIndex, newIndex)
+        const oldIndex = z.machines.indexOf(active.id);
+        const newIndex = z.machines.indexOf(over.id);
+
+        return {
+          ...z,
+          machines: arrayMove(z.machines, oldIndex, newIndex),
+        };
+      })
     );
   };
 
   return (
-    <div className={`zone-box ${isActive ? "zone-active" : ""}`}>
+    <div
+      ref={isActive ? activeZoneRef : null}
+      className={`zone-box ${isActive ? "zone-active" : ""}`}
+    >
+      {/* -------- ZONE HEADER -------- */}
       <div className="zone-header">
-        <span className="zone-name">{zone.name}</span>
+        <div className="zone-name">{zone.name}</div>
 
         <div className="zone-apqo">
           <span>A: {zone.availability ?? 0}%</span>
@@ -83,10 +62,13 @@ function ZoneCard({
         </div>
       </div>
 
+      {/* =================================================
+         EDIT MODE → DRAGGABLE CAPSULE MACHINES
+         ================================================= */}
       {editMode ? (
         <DndContext
           collisionDetection={closestCenter}
-          onDragEnd={handleMachineDragEnd}
+          onDragEnd={handleDragEnd}
         >
           <SortableContext
             items={zone.machines}
@@ -96,29 +78,29 @@ function ZoneCard({
               {zone.machines.map((machineKey) => (
                 <SortableMachine
                   key={machineKey}
-                  machineKey={machineKey}
+                  id={machineKey}
                   status={machineStatus[machineKey]}
-                  editMode
-                  onClick={() => {}}
+                  label={machineMap[machineKey] || machineKey}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
       ) : (
+        /* =================================================
+           NORMAL MODE → SVG CNC MACHINES
+           ================================================= */
         <div className="machines">
           {zone.machines.map((machineKey) => (
-            <SortableMachine
+            <CncMachineSvg
               key={machineKey}
-              machineKey={machineKey}
+              id={machineMap[machineKey] || machineKey}
               status={machineStatus[machineKey]}
-              editMode={false}
               onClick={() =>
                 onMachineClick({
-                  key: machineKey,
-                  id: machineMap[machineKey],
+                  id: machineMap[machineKey] || machineKey,
                   status: machineStatus[machineKey],
-                  zone: zone.name
+                  zone: zone.name,
                 })
               }
             />
@@ -129,21 +111,27 @@ function ZoneCard({
   );
 }
 
-/* ---------------- ZONE VIEW ---------------- */
+/* =========================================================
+   ZONE VIEW
+   ========================================================= */
 function ZoneView({
   zones,
-  setZones,
   editMode,
   activeZoneIndex,
-  onMachineClick
+  setZones,
+  onMachineClick,
 }) {
-  const updateZoneMachines = (zoneId, machines) => {
-    setZones((prev) =>
-      prev.map((z) =>
-        z.id === zoneId ? { ...z, machines } : z
-      )
-    );
-  };
+  const activeZoneRef = useRef(null);
+
+  /* 🔑 AUTO-SCROLL ACTIVE ZONE INTO VIEW */
+  useEffect(() => {
+    if (activeZoneRef.current) {
+      activeZoneRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [activeZoneIndex]);
 
   return (
     <div className="zones-grid">
@@ -151,10 +139,12 @@ function ZoneView({
         <ZoneCard
           key={zone.id}
           zone={zone}
+          index={index}
           editMode={editMode}
           isActive={index === activeZoneIndex}
+          setZones={setZones}
           onMachineClick={onMachineClick}
-          updateZoneMachines={updateZoneMachines}
+          activeZoneRef={activeZoneRef}
         />
       ))}
     </div>

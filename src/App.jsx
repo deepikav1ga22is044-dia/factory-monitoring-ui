@@ -1,64 +1,99 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 import machineData from "./data/machineDetails.json";
 import machineStatus from "./data/machineStatus.json";
 
 import ControlPanel from "./components/ControlPanel";
-import ZoneView from "./components/ZoneView";
-import MachinePanel from "./components/MachinePanel";
+import FactoryScene from "./components/three/FactoryScene";
+import machineMap from "./data/machineMap";
 
-
-const ROTATION = {
-  MACHINE: 5000, // slow down machine change
-  ZONE: 1500,
-  DEPT: 2000,
+const ROTATION_TIME = {
+  FACTORY: 40000, // 40s
+  PLANT: 30000,   // 15s
+  DEPT: 20000,    // 10s
 };
+function buildMachineLookup(machineData, machineStatus, machineMap) {
+  const lookup = {};
 
-/* =========================================================
-   Generate consistent Industrial Machine ID
-   ========================================================= */
-const getDisplayMachineId = (machineId, zoneName) => {
-  const num = machineId.replace(/\D/g, "").padStart(4, "0");
-  const zone = zoneName.replace(/\s+/g, "").toUpperCase().slice(0, 4);
-  return `PLT1-${zone}-MCH-${num}`;
-};
+  machineData.factories.forEach(factory => {
+    factory.plants.forEach(plant => {
+      plant.departments.forEach(dept => {
+        dept.zones.forEach(zone => {
+          zone.machines.forEach(shortId => {
+            const fullId = machineMap[shortId] || shortId;
+            const status = machineStatus[shortId] || "off";
+
+            lookup[shortId] = {
+              shortId,
+              fullId,
+              status,
+
+              // APQO (from machineDetails.json if present)
+              availability: zone.availability ?? null,
+              performance: zone.performance ?? null,
+              quality: zone.quality ?? null,
+              oee: zone.oEE ?? null,
+
+              // 🔁 duplicated / derived fields
+              reason:
+                status === "fault"
+                  ? "Machine Fault"
+                  : status === "idle"
+                  ? "Waiting / Idle"
+                  : status === "off"
+                  ? "Powered Off"
+                  : "Normal Operation",
+
+              lastUpdated: new Date().toLocaleString(),
+
+              parameters: {
+                speed: status === "running" ? "1450 RPM" : "0 RPM",
+                temperature: status === "running" ? "62°C" : "—",
+                load: status === "running" ? "68%" : "—",
+              },
+            };
+          });
+        });
+      });
+    });
+  });
+
+  return lookup;
+}
 
 function App() {
-  /* -------- Selection -------- */
   const [selectedFactory, setSelectedFactory] = useState("");
   const [selectedPlant, setSelectedPlant] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
 
-  /* -------- Layout & rotation -------- */
-  const [zones, setZones] = useState([]);
-  const [activeZoneIndex, setActiveZoneIndex] = useState(0);
-  const [activeMachineIndex, setActiveMachineIndex] = useState(0);
   const [selectedMachine, setSelectedMachine] = useState(null);
-  const [editMode, setEditMode] = useState(false);
 
-  /* -------- Guards -------- */
-  const deptCompletedRef = useRef(false);
-
-  /* -------- Resolve hierarchy -------- */
+  /* ===============================
+     DERIVED DATA
+  =============================== */
   const factory = machineData.factories.find(
     (f) => f.id === selectedFactory
   );
-  const plant = factory?.plants.find((p) => p.id === selectedPlant);
+
+  const plant = factory?.plants.find(
+    (p) => p.id === selectedPlant
+  );
+
   const department =
-    plant && selectedDept
-      ? plant.departments.find((d) => d.id === selectedDept)
-      : null;
+    plant?.departments.find(
+      (d) => d.id === selectedDept
+    ) || null;
 
-  /* -------- Layout key -------- */
-  const layoutKey =
-    selectedFactory && selectedPlant && selectedDept
-      ? `layout-${selectedFactory}-${selectedPlant}-${selectedDept}`
-      : null;
+    const machineLookup = buildMachineLookup(
+  machineData,
+  machineStatus,
+  machineMap
+);
 
-  /* =========================================================
-     DEFAULT LOAD
-     ========================================================= */
+  /* ===============================
+     DEFAULT LOAD (FIRST FACTORY)
+  =============================== */
   useEffect(() => {
     const f = machineData.factories[0];
     const p = f.plants[0];
@@ -69,169 +104,118 @@ function App() {
     setSelectedDept(d.id);
   }, []);
 
-  /* =========================================================
-     AUTO SELECT ON CHANGE
-     ========================================================= */
+  /* ===============================
+     🔑 RESET PLANT & DEPT
+     WHEN FACTORY CHANGES
+  =============================== */
   useEffect(() => {
-    if (!factory) return;
-    setSelectedPlant(factory.plants[0].id);
-    setSelectedDept(factory.plants[0].departments[0].id);
+    if (!selectedFactory) return;
+
+    const f = machineData.factories.find(
+      (x) => x.id === selectedFactory
+    );
+    if (!f) return;
+
+    const p = f.plants[0];
+    const d = p.departments[0];
+
+    setSelectedPlant(p.id);
+    setSelectedDept(d.id);
   }, [selectedFactory]);
 
+  /* ===============================
+     🔑 RESET DEPT
+     WHEN PLANT CHANGES
+  =============================== */
   useEffect(() => {
-    if (!plant) return;
-    setSelectedDept(plant.departments[0].id);
+    if (!factory || !selectedPlant) return;
+
+    const p = factory.plants.find(
+      (x) => x.id === selectedPlant
+    );
+    if (!p) return;
+
+    const d = p.departments[0];
+    setSelectedDept(d.id);
   }, [selectedPlant]);
 
-  /* =========================================================
-     LOAD ZONES
-     ========================================================= */
+  /* ===============================
+     RESET MACHINE ON DEPT CHANGE
+  =============================== */
   useEffect(() => {
-    if (!department) return;
+    setSelectedMachine(null);
+  }, [selectedDept]);
 
-    deptCompletedRef.current = false;
+  console.log("SELECTED DEPT OBJECT:", department);
 
-    const saved = layoutKey && localStorage.getItem(layoutKey);
-    const loadedZones = saved
-      ? JSON.parse(saved)
-      : [...department.zones];
+  /* ===============================
+   AUTO ROTATION – DEPT
+=============================== */
+useEffect(() => {
+  if (!plant) return;
 
-    setZones(loadedZones);
-    setActiveZoneIndex(0);
-    setActiveMachineIndex(0);
+  const interval = setInterval(() => {
+    const depts = plant.departments;
+    if (!depts.length) return;
 
-    const firstZone = loadedZones[0];
-    if (firstZone?.machines.length) {
-      const m = firstZone.machines[0];
-      setSelectedMachine({
-        id: getDisplayMachineId(m, firstZone.name),
-        rawId: m,
-        status: machineStatus[m],
-        zone: firstZone.name,
-      });
-    }
-  }, [department, layoutKey]);
+    const currentIndex = depts.findIndex(
+      (d) => d.id === selectedDept
+    );
 
-  /* =========================================================
-     MACHINE ROTATION
-     ========================================================= */
-  useEffect(() => {
-    if (editMode || !zones.length) return;
+    const nextIndex =
+      (currentIndex + 1) % depts.length;
 
-    const zone = zones[activeZoneIndex];
-    if (!zone) return;
+    setSelectedDept(depts[nextIndex].id);
+  }, ROTATION_TIME.DEPT);
 
-    const timer = setTimeout(() => {
-      setActiveMachineIndex(
-        (prev) => (prev + 1) % zone.machines.length
-      );
-    }, 1200);
+  return () => clearInterval(interval);
+}, [plant, selectedDept]);
 
-    return () => clearTimeout(timer);
-  }, [activeMachineIndex, activeZoneIndex, zones, editMode]);
+/* ===============================
+   AUTO ROTATION – PLANT
+=============================== */
+useEffect(() => {
+  if (!factory) return;
 
-  /* =========================================================
-     ZONE ROTATION
-     ========================================================= */
-  useEffect(() => {
-    if (editMode || !zones.length) return;
+  const interval = setInterval(() => {
+    const plants = factory.plants;
+    if (!plants.length) return;
 
-    const zone = zones[activeZoneIndex];
-    if (!zone) return;
+    const currentIndex = plants.findIndex(
+      (p) => p.id === selectedPlant
+    );
 
-    if (activeMachineIndex === zone.machines.length - 1) {
-      const timer = setTimeout(() => {
-        if (activeZoneIndex < zones.length - 1) {
-          setActiveZoneIndex((z) => z + 1);
-        } else {
-          deptCompletedRef.current = true;
-        }
-        setActiveMachineIndex(0);
-      }, 1200);
+    const nextIndex =
+      (currentIndex + 1) % plants.length;
 
-      return () => clearTimeout(timer);
-    }
-  }, [activeMachineIndex, activeZoneIndex, zones, editMode]);
+    setSelectedPlant(plants[nextIndex].id);
+  }, ROTATION_TIME.PLANT);
 
-  /* =========================================================
-     DEPARTMENT → PLANT → FACTORY ROTATION
-     ========================================================= */
-  useEffect(() => {
-    if (editMode || !deptCompletedRef.current || !plant || !factory) return;
+  return () => clearInterval(interval);
+}, [factory, selectedPlant]);
 
-    const timer = setTimeout(() => {
-      const deptIndex = plant.departments.findIndex(
-        (d) => d.id === selectedDept
-      );
+/* ===============================
+   AUTO ROTATION – FACTORY
+=============================== */
+useEffect(() => {
+  const interval = setInterval(() => {
+    const factories = machineData.factories;
 
-      // Next department exists
-      if (deptIndex < plant.departments.length - 1) {
-        setSelectedDept(plant.departments[deptIndex + 1].id);
-      } else {
-        // Move to next plant
-        const plantIndex = factory.plants.findIndex(
-          (p) => p.id === selectedPlant
-        );
+    const currentIndex = factories.findIndex(
+      (f) => f.id === selectedFactory
+    );
 
-        if (plantIndex < factory.plants.length - 1) {
-          const nextPlant = factory.plants[plantIndex + 1];
-          setSelectedPlant(nextPlant.id);
-          setSelectedDept(nextPlant.departments[0].id);
-        } else {
-          // Move to next factory
-          const factoryIndex = machineData.factories.findIndex(
-            (f) => f.id === selectedFactory
-          );
+    const nextIndex =
+      (currentIndex + 1) % factories.length;
 
-          const nextFactory =
-            factoryIndex < machineData.factories.length - 1
-              ? machineData.factories[factoryIndex + 1]
-              : machineData.factories[0];
+    setSelectedFactory(factories[nextIndex].id);
+  }, ROTATION_TIME.FACTORY);
 
-          setSelectedFactory(nextFactory.id);
-          setSelectedPlant(nextFactory.plants[0].id);
-          setSelectedDept(nextFactory.plants[0].departments[0].id);
-        }
-      }
-
-      setActiveZoneIndex(0);
-      setActiveMachineIndex(0);
-      deptCompletedRef.current = false;
-    }, 1200);
-
-    return () => clearTimeout(timer);
-  }, [
-    deptCompletedRef.current,
-    selectedDept,
-    selectedPlant,
-    selectedFactory,
-    plant,
-    factory,
-    editMode,
-  ]);
-
-  /* =========================================================
-     UPDATE RIGHT PANEL
-     ========================================================= */
-  useEffect(() => {
-    if (!zones.length) return;
-
-    const zone = zones[activeZoneIndex];
-    if (!zone) return;
-
-    const m = zone.machines[activeMachineIndex];
-    if (!m) return;
-
-    setSelectedMachine({
-      id: getDisplayMachineId(m, zone.name),
-      rawId: m,
-      status: machineStatus[m],
-      zone: zone.name,
-    });
-  }, [activeMachineIndex, activeZoneIndex, zones]);
+  return () => clearInterval(interval);
+}, [selectedFactory]);
 
   return (
-    <div className={`app ${editMode ? "edit-mode" : ""}`}>
+    <div className="app">
       <header className="title-bar">
         <h1>Factory Monitoring Dashboard</h1>
       </header>
@@ -246,30 +230,19 @@ function App() {
           selectedDept={selectedDept}
           setSelectedDept={setSelectedDept}
         />
-
-        <div className="top-right-controls">
-          <button
-            className="layout-btn edit"
-            onClick={() => setEditMode((e) => !e)}
-          >
-            {editMode ? "Exit Edit" : "Edit Layout"}
-          </button>
-        </div>
       </div>
 
-      {department && zones.length > 0 && (
-        <div className="content-layout">
-          <ZoneView
-            zones={zones}
-            editMode={editMode}
-            activeZoneIndex={activeZoneIndex}
-            setZones={setZones}
-            onMachineClick={(machine) =>
-              setSelectedMachine(machine)
-            }
-          />
+      {/* FULL SCREEN DEPARTMENT CANVAS */}
+      {department && (
+        <div className="canvas-wrapper">
+          <FactoryScene
+  department={department}
+  machineLookup={machineLookup}   // ✅ IMPORTANT
+  selectedMachine={selectedMachine}
+  onMachineHover={setSelectedMachine}
+  onCloseMachine={() => setSelectedMachine(null)}
+/>
 
-          <MachinePanel machine={selectedMachine} />
         </div>
       )}
     </div>
